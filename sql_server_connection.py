@@ -1,6 +1,7 @@
 import pyodbc
 import os
 import dotenv
+from sql_models.produto_model.produto import MetodosProduto
 
 dotenv.load_dotenv()
 
@@ -19,16 +20,24 @@ class ConnectionDatabase():
     def get_product_by_code(self, code):
         if self.connection_db != None:
             query_return = self.cursor_connection.execute(f"SELECT * FROM [SICNET_139726].[dbo].[TABEST1] WHERE [codigo] = '{code}';").fetchone() #query
-            return {"status_db": "success", "query_return": query_return}
+            if query_return != None:
+                produto_model = MetodosProduto.convert_to_product_type(query_return)
+                return {"status_db": "success", "query_return": produto_model}
+            else:
+                return {"status_db": "product_not_found"}    
         else:
             return {"status_db": "failed"}
         
-connection_db = ConnectionDatabase()
-return_data = connection_db.get_product_by_code('7896741313348')
-if return_data['status_db'] == "success":
-    print(return_data['query_return'])
-else:
-    print("Banco de dados indisponível no momento!")
-
-
-#7896741313348
+    def get_product_by_description(self, description):
+        if self.connection_db != None:
+            query_return = self.cursor_connection.execute(f"SELECT * FROM [SICNET_139726].[dbo].[TABEST1] WHERE [produto] LIKE '%{description}%';").fetchall() #query
+            if len(query_return) != 0:
+                lista_de_produtos = []
+                for produto in query_return:
+                    produto_model = MetodosProduto.convert_to_product_type(produto)
+                    lista_de_produtos.append(produto_model)
+                return {"status_db": "success", "query_return": lista_de_produtos}
+            else:
+                return {"status_db": "product_not_found"}    
+        else:
+            return {"status_db": "failed"}

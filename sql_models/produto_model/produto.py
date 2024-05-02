@@ -52,11 +52,12 @@ class Produto(BaseModel):
     CST_PIS: str | None
     CST_COFINS: str | None
 
-def convert_to_product_type(tuple):
-    produto_convertido = Produto(tuple)
-    return produto_convertido
-
-tupla = (2, '7896741313348', None, 'TUBO EXT.P/CORTINA 1,20A1,33 MT', None, 'MAXEB', None, Decimal('10.7500'), Decimal('10.7500'), Decimal('21.9900'), -3.0, 1.0, 'UN', 104.56, 0.0, None, '2018-08-15', None, None, False, False, '83024900', 0.0, '102', 18.0, 100.0, 0.38, 0.38, None, None, None, None, None, None, datetime(2017, 1, 13, 17, 20, 30), 1, None, 0.0, None, None, 0.0, '7896741313348', '7896741313348', None, None, 0, None, None)
-
-retorno = convert_to_product_type(tupla)
-print(retorno)
+class MetodosProduto():
+    def __init__(self) -> None:
+        pass
+    
+    def convert_to_product_type(tuple):
+        produto_convertido = Produto(**{key: tuple[i] for i, key in enumerate(Produto.model_fields.keys())})
+        return produto_convertido
+    
+#7896741313348
