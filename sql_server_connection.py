@@ -4,6 +4,9 @@ import dotenv
 from sql_models.produto_model.produto import MetodosProduto
 from sql_models.sales_model.sales_type import MethodsTypesSales
 from sql_models.sales_model.sales import MethodsSales
+from sql_models.sales_model.relatory_sales_resume import MethodRelatoryResume
+from sql_models.sales_model.relatory_sales_types import MethodRelatoryTypes
+from sql_models.sales_model.relatory_sales_detailed import MethodRelatoryDetailed
 
 dotenv.load_dotenv()
 
@@ -67,6 +70,92 @@ class ConnectionDatabase():
                     venda_model = MethodsSales.convert_to_sales(venda)
                     lista_de_vendas.append(venda_model)
                 return {"status_db": "success", "query_return": lista_de_vendas}
+            else:
+                return {"status_db": "types_not_found"}    
+        else:
+            return {"status_db": "failed"}
+    
+    def get_relatory_sales_resume(self, date):
+        if self.connection_db != None:
+            #date example: 2024-07-24
+            query_text = f"""
+                SELECT venda.[data]
+                    ,SUM(vendas_valor.[valor]) AS valor_venda
+                    ,SUM(vendas_valor.[pgtroco]) AS troco
+                    ,SUM(vendas_valor.[valor] - vendas_valor.[pgtroco]) AS valor_liquido
+                FROM [SICNET_139726].[dbo].[TABEST3A] venda
+                INNER JOIN [SICNET_139726].[dbo].[TABEST3R] vendas_valor ON venda.[controle] = vendas_valor.[lkest3a]
+                INNER JOIN [SICNET_139726].[dbo].[TABEST7] tipos_pagto ON vendas_valor.[lkest7] = tipos_pagto.[controle]
+                WHERE venda.[data] = '{date}'
+                AND venda.[pedido] > 0
+                GROUP BY venda.[data]
+                ;
+            """
+            query_return = self.cursor_connection.execute(query_text).fetchall() #query
+            if len(query_return) != 0:
+                relatorys = []
+                for relatory in query_return:
+                    relatory_sales = MethodRelatoryResume.convert_to_relatory(relatory)
+                    relatorys.append(relatory_sales)
+                return {"status_db": "success", "query_return": relatorys}
+            else:
+                return {"status_db": "types_not_found"}    
+        else:
+            return {"status_db": "failed"}
+        
+    def get_relatory_sales_types_received(self, date):
+        if self.connection_db != None:
+            #date example: 2024-07-24
+            query_text = f"""
+                SELECT venda.[data]
+                    ,tipos_pagto.[recebimento]
+                    ,SUM(vendas_valor.[valor]) AS valor_venda
+                    ,SUM(vendas_valor.[pgtroco]) AS troco
+                    ,SUM(vendas_valor.[valor] - vendas_valor.[pgtroco]) AS valor_liquido
+                FROM [SICNET_139726].[dbo].[TABEST3A] venda
+                INNER JOIN [SICNET_139726].[dbo].[TABEST3R] vendas_valor ON venda.[controle] = vendas_valor.[lkest3a]
+                INNER JOIN [SICNET_139726].[dbo].[TABEST7] tipos_pagto ON vendas_valor.[lkest7] = tipos_pagto.[controle]
+                WHERE venda.[data] = '{date}'
+                AND venda.[pedido] > 0
+                GROUP BY venda.[data], tipos_pagto.[recebimento]
+                ;
+            """
+            query_return = self.cursor_connection.execute(query_text).fetchall() #query
+            if len(query_return) != 0:
+                relatorys = []
+                for relatory in query_return:
+                    relatory_sales = MethodRelatoryTypes.convert_to_relatory(relatory)
+                    relatorys.append(relatory_sales)
+                return {"status_db": "success", "query_return": relatorys}
+            else:
+                return {"status_db": "types_not_found"}    
+        else:
+            return {"status_db": "failed"}
+    
+    def get_relatory_sales_detailed(self, date):
+        if self.connection_db != None:
+            #date example: 2024-07-24
+            query_text = f"""
+                SELECT venda.[data]
+                    ,venda.[pedido]
+                    ,tipos_pagto.[recebimento]
+                    ,vendas_valor.[valor] AS valor_venda
+                    ,vendas_valor.[pgtroco] AS troco
+                    ,vendas_valor.[valor] - vendas_valor.[pgtroco] AS valor_liquido
+                FROM [SICNET_139726].[dbo].[TABEST3A] venda
+                INNER JOIN [SICNET_139726].[dbo].[TABEST3R] vendas_valor ON venda.[controle] = vendas_valor.[lkest3a]
+                INNER JOIN [SICNET_139726].[dbo].[TABEST7] tipos_pagto ON vendas_valor.[lkest7] = tipos_pagto.[controle]
+                WHERE venda.[data] = '2024-07-24'
+                AND venda.[pedido] > 0
+                ;
+            """
+            query_return = self.cursor_connection.execute(query_text).fetchall() #query
+            if len(query_return) != 0:
+                relatorys = []
+                for relatory in query_return:
+                    relatory_sales = MethodRelatoryDetailed.convert_to_relatory(relatory)
+                    relatorys.append(relatory_sales)
+                return {"status_db": "success", "query_return": relatorys}
             else:
                 return {"status_db": "types_not_found"}    
         else:
